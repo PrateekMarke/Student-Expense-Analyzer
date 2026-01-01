@@ -3,26 +3,27 @@ import 'package:go_router/go_router.dart';
 import 'package:student_expense_analyzer/core/pages/splash_screen.dart';
 import 'package:student_expense_analyzer/config/route/onboarding_routes.dart';
 
-class Approuter {
-  static final Approuter _instance = Approuter.init();
 
-  static final instance = _instance;
-  static late final GoRouter router;
+
+class Approuter {
 
   static final rootNavigatorKey = GlobalKey<NavigatorState>();
   static final parentNavigatorKey = GlobalKey<NavigatorState>();
   static final homeTabNavigatorKey = GlobalKey<NavigatorState>();
-  static final searchTabNavigatorKey = GlobalKey<NavigatorState>();
+  static final settingTabNavigatorKey = GlobalKey<NavigatorState>();
+  static final analyticsTabNavigatorKey = GlobalKey<NavigatorState>();
+  static final transactionsTabNavigatorKey = GlobalKey<NavigatorState>();
+  static final budgetTabNavigatorKey = GlobalKey<NavigatorState>();
 
-  Approuter.init() {
-    final List<RouteBase> routes = <RouteBase>[...onboardingRoutes];
-    router = GoRouter(
-      initialLocation: SplashScreen.routePath,
-      navigatorKey: rootNavigatorKey,
-      routes: routes,
-    );
-  }
+ 
+  static final GoRouter router = GoRouter(
+    initialLocation: SplashScreen.routePath,
+    navigatorKey: rootNavigatorKey,
+    routes: onboardingRoutes, 
+    debugLogDiagnostics: true,
+  );
 }
+
 
 extension GoRouterExtension on GoRouter {
   String get location {

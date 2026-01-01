@@ -53,7 +53,7 @@ class AppTheme {
       contentPadding: const EdgeInsets.all(15),
     ),
     datePickerTheme: DatePickerThemeData(
-      backgroundColor: Colors.white, // Set the background color to white
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
