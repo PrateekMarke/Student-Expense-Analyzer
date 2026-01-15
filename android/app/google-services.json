@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "522439324128",
+    "project_id": "studentexpenseanalyzer",
+    "storage_bucket": "studentexpenseanalyzer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522439324128:android:a4064a51f6e019f9cd7b85",
+        "android_client_info": {
+          "package_name": "com.example.student_expense_analyzer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOVtLbJmugAqVjosYBtat0n4DF7Pzdcd0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

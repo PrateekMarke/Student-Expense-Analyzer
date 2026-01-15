@@ -1,29 +1,65 @@
 import 'package:flutter/material.dart';
 
 
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final String label;
   final IconData icon;
   final bool isPassword;
   final TextInputType inputType;
+  final TextEditingController? controller;
 
   const CustomTextField({
+    super.key,
     required this.label,
     required this.icon,
     this.isPassword = false,
     this.inputType = TextInputType.text,
+    this.controller,
   });
+
+  @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+
+  bool _obscureText = true;
+
+  @override
+  void initState() {
+    super.initState();
+   
+    _obscureText = widget.isPassword;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextField(
-        obscureText: isPassword,
-        keyboardType: inputType,
+        controller: widget.controller,
+        obscureText: _obscureText,
+        keyboardType: widget.inputType,
         decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFF6200EE).withOpacity(0.7)),
+          labelText: widget.label,
+          prefixIcon: Icon(widget.icon, color: const Color(0xFF6200EE).withOpacity(0.7)),
+          
+      
+          suffixIcon: widget.isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
+              : null,
+        
+
           filled: true,
           fillColor: Colors.grey[100],
           border: OutlineInputBorder(
