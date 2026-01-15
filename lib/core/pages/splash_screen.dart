@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
             const Spacer(flex: 2),
-        
+
             const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
               strokeWidth: 3,
