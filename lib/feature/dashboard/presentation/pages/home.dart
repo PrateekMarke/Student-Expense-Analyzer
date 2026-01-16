@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
+import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_state.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
   static const routeName = 'HomeScreen';
   static const routePath = '/HomeScreen';
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -46,86 +50,105 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
-      decoration: const BoxDecoration(
-        color: Color(0xFF6200EE),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildHeader(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        String fullName = "User Name";
+        String initials = "U";
+
+        if (state is AuthSuccess) {
+          fullName = "${state.user.firstName} ${state.user.lastName}";
+          initials = (state.user.firstName[0] + state.user.lastName[0])
+              .toUpperCase();
+        }
+
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
+          decoration: const BoxDecoration(
+            color: Color(0xFF6200EE),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Welcome back,",
-                    style: TextStyle(color: Colors.white70),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Welcome back,",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      Text(
+                        fullName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    "Rahul Kumar",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                  CircleAvatar(
+                    backgroundColor: Colors.orange,
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
-              CircleAvatar(
-                backgroundColor: Colors.orange,
-                child: const Text("RK", style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 25),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  "Total Balance",
-                  style: TextStyle(color: Colors.white70),
+              const SizedBox(height: 25),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const Text(
-                  "₹12,450",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    _balanceStat(
-                      "Income",
-                      "₹15,000",
-                      Icons.arrow_downward,
-                      Colors.green,
+                    const Text(
+                      "Total Balance",
+                      style: TextStyle(color: Colors.white70),
                     ),
-                    _balanceStat(
-                      "Expenses",
-                      "₹8,320",
-                      Icons.arrow_upward,
-                      Colors.red,
+                    const Text(
+                      "₹12,450",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _balanceStat(
+                          "Income",
+                          "₹15,000",
+                          Icons.arrow_downward,
+                          Colors.green,
+                        ),
+                        _balanceStat(
+                          "Expenses",
+                          "₹8,320",
+                          Icons.arrow_upward,
+                          Colors.red,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -135,6 +158,7 @@ class HomeScreen extends StatelessWidget {
         Row(
           children: [
             Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
             Text(label, style: const TextStyle(color: Colors.white70)),
           ],
         ),

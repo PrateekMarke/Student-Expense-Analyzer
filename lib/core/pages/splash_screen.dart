@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:student_expense_analyzer/core/get_it/service_locator.dart';
+
+import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
+import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_state.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,9 +19,20 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _handleNavigation();
+  }
+
+  void _handleNavigation() {
     Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        context.go('/signup');
+      if (!mounted) return;
+
+      final authBloc = sl<AuthBloc>();
+      final authState = authBloc.state;
+
+      if (authState is AuthSuccess) {
+        context.go('/home');
+      } else {
+        context.go('/login');
       }
     });
   }
@@ -34,48 +49,8 @@ class _SplashScreenState extends State<SplashScreen> {
             colors: [Color(0xFF6200EE), Color(0xFF4500AB)],
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(flex: 3),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.account_balance_wallet_rounded,
-                size: 80,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "Expense Analyzer",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const Text(
-              "Smart student savings",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-              ),
-            ),
-            const Spacer(flex: 2),
-
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-              strokeWidth: 3,
-            ),
-            const SizedBox(height: 40),
-          ],
+        child: const Center(
+          child: CircularProgressIndicator(color: Colors.white),
         ),
       ),
     );

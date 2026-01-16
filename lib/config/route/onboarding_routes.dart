@@ -1,5 +1,8 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:student_expense_analyzer/core/get_it/service_locator.dart';
 import 'package:student_expense_analyzer/feature/analytics/presentation/pages/analytics.dart';
+import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
 import 'package:student_expense_analyzer/feature/budget/presentation/pages/budget.dart';
 import 'package:student_expense_analyzer/config/route/app_router.dart';
 import 'package:student_expense_analyzer/core/pages/splash_screen.dart';
@@ -33,7 +36,10 @@ final onboardingRoutes = <RouteBase>[
   StatefulShellRoute.indexedStack(
     parentNavigatorKey: Approuter.rootNavigatorKey,
     pageBuilder: (context, state, navigationShell) => getPage(
-      child: MainWrapperPage(navigationShell: navigationShell),
+      child: BlocProvider(
+        create: (context) => sl<AuthBloc>(),
+        child: MainWrapperPage(navigationShell: navigationShell),
+      ),
       state: state,
     ),
     branches: [
