@@ -7,13 +7,21 @@ import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_sta
 
 class AuthInterceptor extends Interceptor {
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final publicPaths = [
+      '/v1/auth/signup',
+      '/v1/auth/login',
+    ];
 
-    final authBloc = sl<AuthBloc>();
-    final state = authBloc.state;
-    if (state is AuthSuccess && state.user.token != null) {
-      options.headers['Authorization'] = 'Bearer ${state.user.token}';
+    if (!publicPaths.any((path) => options.path.contains(path))) {
+      final authBloc = sl<AuthBloc>();
+      final state = authBloc.state;
+
+      if (state is AuthSuccess && state.user.token != null) {
+        options.headers['Authorization'] = 'Bearer ${state.user.token}';
+      }
     }
+
     return handler.next(options);
   }
 
