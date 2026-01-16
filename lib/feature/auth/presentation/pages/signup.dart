@@ -40,7 +40,7 @@ class _SignUpPageState extends State<SignUpPage> {
         body: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthSuccess) {
-              context.go('/home');
+              context.go('/login');
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

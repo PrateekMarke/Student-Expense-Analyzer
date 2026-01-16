@@ -16,7 +16,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final response = await _dio.post(
-        'https://expense-analyzer-1xod.onrender.com/v1/auth/signup',
+        'v1/auth/signup',
         data: {
           "first_name": firstName,
           "last_name": lastName,
@@ -30,26 +30,30 @@ class AuthRepositoryImpl implements AuthRepository {
       throw e.response?.data['message'] ?? "Registration failed";
     }
   }
+
   @override
-Future<AuthUser> login({required String email, required String password}) async {
-  try {
-    final response = await _dio.post(
-      'https://expense-analyzer-1xod.onrender.com/v1/auth/login',
-      data: {"email": email, "password": password},
-    );
+  Future<AuthUser> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _dio.post(
+        'v1/auth/login',
+        data: {"email": email, "password": password},
+      );
 
-    final userData = response.data['data']['user'];
-    final token = response.data['data']['token'];
+      final userData = response.data['data']['user'];
+      final token = response.data['data']['token'];
 
-    return AuthUserModel(
-      id: userData['id'],
-      firstName: userData['first_name'],
-      lastName: userData['last_name'],
-      email: userData['email'],
-      token: token,
-    );
-  } on DioException catch (e) {
-    throw e.response?.data['message'] ?? "Login failed";
+      return AuthUserModel(
+        id: userData['id'],
+        firstName: userData['first_name'],
+        lastName: userData['last_name'],
+        email: userData['email'],
+        token: token,
+      );
+    } on DioException catch (e) {
+      throw e.response?.data['message'] ?? "Login failed";
+    }
   }
-}
 }
