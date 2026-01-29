@@ -3,8 +3,13 @@ import 'package:dio/dio.dart';
 import 'package:student_expense_analyzer/core/network/auth_interceptor.dart';
 import 'package:student_expense_analyzer/feature/auth/data/repository/auth_repo_impl.dart';
 import 'package:student_expense_analyzer/feature/auth/domain/repositories/auth_repo.dart';
+
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
+import 'package:student_expense_analyzer/feature/transaction/data/datasources/trans_remote_data_source.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/repository/automation_repository_impl.dart';
+import 'package:student_expense_analyzer/feature/transaction/data/repository/transcation_repo_impl.dart';
+import 'package:student_expense_analyzer/feature/transaction/domain/repositories/transcation_repo.dart';
+import 'package:student_expense_analyzer/feature/transaction/domain/usecase/create_tran.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_bloc.dart';
 
 final sl = GetIt.instance;
@@ -27,13 +32,25 @@ Future<void> initInjection() async {
     return dio;
   });
 
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  // Data Sources
+  sl.registerLazySingleton<TransactionRemoteDataSource>(
+    () => TransactionRemoteDataSourceImpl(sl()),
+  );
 
-  sl.registerFactory(() => AuthBloc(sl()));
+  // Repositories
+  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<TransactionRepository>(
+    () => TransactionRepositoryImpl(sl()),
+  );
 
   sl.registerLazySingleton<AutomationRepositoryImpl>(
     () => AutomationRepositoryImpl(),
   );
 
-  sl.registerFactory(() => AutomationBloc());
+  // Use Cases
+  sl.registerLazySingleton(() => CreateTransactionUseCase(sl()));
+
+  // Blocs
+  sl.registerFactory(() => AuthBloc(sl()));
+  sl.registerFactory(() => AutomationBloc(sl<CreateTransactionUseCase>()));
 }
