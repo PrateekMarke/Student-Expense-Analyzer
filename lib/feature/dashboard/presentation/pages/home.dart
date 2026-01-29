@@ -1,12 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:student_expense_analyzer/core/services/notification_manager.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_state.dart';
+import 'package:student_expense_analyzer/feature/transaction/data/repository/automation_repository_impl.dart';
+import 'package:student_expense_analyzer/feature/transaction/data/services/automation_parser.dart';
+import 'package:student_expense_analyzer/feature/transaction/domain/entites/dected_transaction.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_bloc.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_event.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   static const routeName = 'HomeScreen';
   static const routePath = '/HomeScreen';
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    _requestAllPermissions();
+  }
+
+  Future<void> _requestAllPermissions() async {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.sms,
+      Permission.notification,
+    ].request();
+
+    if (statuses[Permission.sms]!.isGranted &&
+        statuses[Permission.notification]!.isGranted) {
+      final repo = AutomationRepositoryImpl();
+      repo.initSMSListener((transaction) {
+        context.read<AutomationBloc>().add(TransactionDetected(transaction));
+        NotificationManager.showCategorizationAlert(transaction.amount);
+      });
+      repo.initNotificationListener((transaction) {
+        context.read<AutomationBloc>().add(TransactionDetected(transaction));
+        NotificationManager.showCategorizationAlert(transaction.amount);
+      });
+    } else {
+      _showPermissionDialog();
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Permissions Required"),
+        content: const Text(
+          "To automate your expense tracking, this app needs access to read transaction SMS and show alerts for categorization.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(context);
+            },
+            child: const Text("Open Settings"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +108,27 @@ class HomeScreen extends StatelessWidget {
                 _categoryProgress("Food", 3240, 0.39, Colors.orange),
                 _categoryProgress("Transport", 1850, 0.22, Colors.blue),
                 _categoryProgress("Rent", 2000, 0.24, Colors.purple),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.bug_report),
+                  label: const Text("Test Parser & Bloc"),
+                  onPressed: () {
+                    const testText =
+                        "HDFC Bank: Your A/c XXX123 is debited for INR 1250.00 at Amazon";
+                    final amount = AutomationParser.extractAmount(testText);
+
+                    if (amount != null) {
+                      final tx = DetectedTransaction(
+                        amount: amount,
+                        rawBody: testText,
+                        source: "Manual_Test",
+                      );
+                      context.read<AutomationBloc>().add(
+                        TransactionDetected(tx),
+                      );
+                      NotificationManager.showCategorizationAlert(amount);
+                    }
+                  },
+                ),
               ],
             ),
           ),
