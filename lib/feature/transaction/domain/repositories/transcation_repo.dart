@@ -4,5 +4,6 @@ abstract class TransactionRepository {
     required double amount,
     required String type,
     required String category,
+    required String title,
   });
 }

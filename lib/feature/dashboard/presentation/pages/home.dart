@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:student_expense_analyzer/core/services/notification_manager.dart';
+import 'package:student_expense_analyzer/core/utils/date_formatter.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_state.dart';
+import 'package:student_expense_analyzer/feature/dashboard/domain/entites/recent_transcation.dart';
+import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_event.dart';
+import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/repository/automation_repository_impl.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/services/automation_parser.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/entites/dected_transaction.dart';
@@ -23,8 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
     _requestAllPermissions();
+    context.read<DashboardBloc>().add(FetchDashboardData(limit: 5));
   }
 
   Future<void> _requestAllPermissions() async {
@@ -38,11 +43,19 @@ class _HomeScreenState extends State<HomeScreen> {
       final repo = AutomationRepositoryImpl();
       repo.initSMSListener((transaction) {
         context.read<AutomationBloc>().add(TransactionDetected(transaction));
-        NotificationManager.showCategorizationAlert(transaction.amount);
+        NotificationManager.showCategorizationAlert(
+          transaction.amount,
+          transaction.title,
+          transaction.type,
+        );
       });
       repo.initNotificationListener((transaction) {
         context.read<AutomationBloc>().add(TransactionDetected(transaction));
-        NotificationManager.showCategorizationAlert(transaction.amount);
+        NotificationManager.showCategorizationAlert(
+          transaction.amount,
+          transaction.title,
+          transaction.type,
+        );
       });
     } else {
       _showPermissionDialog();
@@ -108,24 +121,47 @@ class _HomeScreenState extends State<HomeScreen> {
                 _categoryProgress("Food", 3240, 0.39, Colors.orange),
                 _categoryProgress("Transport", 1850, 0.22, Colors.blue),
                 _categoryProgress("Rent", 2000, 0.24, Colors.purple),
+                _sectionHeader(
+                  "Recent Transactions",
+                  onSeeAll: () {
+                    context.read<DashboardBloc>().add(
+                      FetchDashboardData(limit: 10),
+                    );
+                  },
+                ),
+
+                _buildRecentTransactionsList(),
+                const SizedBox(height: 24),
+                _sectionHeader("Savings Goal"),
+                const SizedBox(height: 12),
+                _buildSavingsGoalCard(),
+
                 ElevatedButton.icon(
                   icon: const Icon(Icons.bug_report),
                   label: const Text("Test Parser & Bloc"),
                   onPressed: () {
                     const testText =
-                        "HDFC Bank: Your A/c XXX123 is debited for INR 1250.00 at Amazon";
+                        "SBI Bank: Your A/c XXX123 is debited for INR 6776.00 at Meesho";
                     final amount = AutomationParser.extractAmount(testText);
+                    final title = AutomationParser.extractTitle(testText);
+                    final type = AutomationParser.extractType(testText);
 
                     if (amount != null) {
                       final tx = DetectedTransaction(
                         amount: amount,
                         rawBody: testText,
                         source: "Manual_Test",
+                        title: title,
+                        type: type,
                       );
                       context.read<AutomationBloc>().add(
                         TransactionDetected(tx),
                       );
-                      NotificationManager.showCategorizationAlert(amount);
+                      NotificationManager.showCategorizationAlert(
+                        amount,
+                        title,
+                        type,
+                      );
                     }
                   },
                 ),
@@ -305,4 +341,183 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+Widget _sectionHeader(String title, {VoidCallback? onSeeAll}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      ),
+      if (onSeeAll != null)
+        TextButton(
+          onPressed: onSeeAll,
+          child: const Text(
+            "See All",
+            style: TextStyle(color: Color(0xFF6200EE)),
+          ),
+        ),
+    ],
+  );
+}
+
+Widget _buildRecentTransactionsList() {
+  return BlocBuilder<DashboardBloc, DashboardState>(
+    builder: (context, state) {
+      if (state is DashboardLoading) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: CircularProgressIndicator(),
+          ),
+        );
+      } else if (state is DashboardLoaded) {
+        if (state.recentTransactions.isEmpty) {
+          return const Center(child: Text("No transactions yet."));
+        }
+        return Column(
+          children: [
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: state.recentTransactions.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return _transactionTile(state.recentTransactions[index]);
+              },
+            ),
+            if (state.recentTransactions.length > 5)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(
+                  "Showing last ${state.recentTransactions.length} transactions",
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                ),
+              ),
+          ],
+        );
+      } else if (state is DashboardError) {
+        if (state.message.contains("not found") ||
+            state.message.contains("10001")) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text("No transactions yet. Start spending to see data!"),
+            ),
+          );
+        }
+
+        return Center(child: Text(state.message));
+      }
+      return const SizedBox();
+    },
+  );
+}
+
+Widget _transactionTile(RecentTranscation tx) {
+  final bool isIncome = tx.type == 'deposit';
+
+  final String formattedDate = DateFormatter.formatReadable(tx.date);
+
+  return Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF8F9FE),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: isIncome
+              ? Colors.green.withOpacity(0.1)
+              : Colors.red.withOpacity(0.1),
+          child: Icon(
+            isIncome ? Icons.south_west : Icons.north_east,
+            color: isIncome ? Colors.green : Colors.red,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tx.title,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                "${tx.category} • $formattedDate",
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          "${isIncome ? '+' : '-'}₹${tx.amount.toInt()}",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isIncome ? Colors.green : Colors.red,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildSavingsGoalCard() {
+  return Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF2FFF5),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: Colors.green.withOpacity(0.1)),
+    ),
+    child: Column(
+      children: [
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Monthly Savings Target",
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              "83%",
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: const LinearProgressIndicator(
+            value: 0.83,
+            minHeight: 10,
+            backgroundColor: Colors.white,
+            color: Colors.green,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "₹4,130 saved",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text("Goal: ₹5,000", style: TextStyle(color: Colors.grey[600])),
+          ],
+        ),
+      ],
+    ),
+  );
 }

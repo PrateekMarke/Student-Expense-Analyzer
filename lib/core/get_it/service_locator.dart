@@ -5,6 +5,10 @@ import 'package:student_expense_analyzer/feature/auth/data/repository/auth_repo_
 import 'package:student_expense_analyzer/feature/auth/domain/repositories/auth_repo.dart';
 
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
+import 'package:student_expense_analyzer/feature/dashboard/data/repository/dashboard_repo_impl.dart';
+import 'package:student_expense_analyzer/feature/dashboard/domain/repository/dashboard_repository.dart';
+import 'package:student_expense_analyzer/feature/dashboard/domain/usecase/get_recent_transaction.dart';
+import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/datasources/trans_remote_data_source.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/repository/automation_repository_impl.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/repository/transcation_repo_impl.dart';
@@ -42,15 +46,20 @@ Future<void> initInjection() async {
   sl.registerLazySingleton<TransactionRepository>(
     () => TransactionRepositoryImpl(sl()),
   );
-
+  sl.registerLazySingleton<DashboardRepository>(
+    () => DashboardRepositoryImpl(sl()),
+  );
   sl.registerLazySingleton<AutomationRepositoryImpl>(
     () => AutomationRepositoryImpl(),
   );
 
   // Use Cases
   sl.registerLazySingleton(() => CreateTransactionUseCase(sl()));
-
+  sl.registerLazySingleton(() => GetRecentTransactions(sl()));
   // Blocs
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => AutomationBloc(sl<CreateTransactionUseCase>()));
+  sl.registerFactory(
+    () => DashboardBloc(getRecentTransactions: sl<GetRecentTransactions>()),
+  );
 }

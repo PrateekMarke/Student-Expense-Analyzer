@@ -13,11 +13,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
     required double amount,
     required String type,
     required String category,
+    required String title,
   }) async {
     final data = {
       "amount": amount,
       "type": type, 
       "category": category,
+      "title": title,
     };
     return await remoteDataSource.createTransaction(data);
   }

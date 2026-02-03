@@ -7,9 +7,12 @@ import 'dashboard_state.dart';
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final GetRecentTransactions getRecentTransactions;
 
-  DashboardBloc({required this.getRecentTransactions}) : super(DashboardInitial()) {
+  DashboardBloc({required this.getRecentTransactions})
+    : super(DashboardInitial()) {
     on<FetchDashboardData>((event, emit) async {
-      emit(DashboardLoading());
+      if (state is! DashboardLoaded) {
+        emit(DashboardLoading());
+      }
       try {
         final transactions = await getRecentTransactions(limit: event.limit);
         emit(DashboardLoaded(recentTransactions: transactions));

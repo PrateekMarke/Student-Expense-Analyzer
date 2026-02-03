@@ -25,8 +25,9 @@ Future<void> _onCategorize(CategorizeTransaction event, Emitter<AutomationState>
   
       await createTransactionUseCase(
         amount: event.transaction.amount,
-        type: 'expense', 
+        type: event.transaction.type, 
         category: event.category,
+        title: event.title,
       );
 
       

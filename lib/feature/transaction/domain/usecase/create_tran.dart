@@ -10,11 +10,13 @@ class CreateTransactionUseCase {
     required double amount,
     required String type,
     required String category,
+    required String title,
   }) {
     return repository.createTransaction(
       amount: amount,
       type: type,
       category: category,
+      title: title,
     );
   }
 }
