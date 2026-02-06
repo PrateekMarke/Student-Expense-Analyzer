@@ -15,7 +15,24 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       }
       try {
         final transactions = await getRecentTransactions(limit: event.limit);
-        emit(DashboardLoaded(recentTransactions: transactions));
+
+      double totalIncome = 0.0;
+       double totalExpenses = 0.0;
+       for (var tx in transactions) {
+
+      if (tx.type == 'deposit') {
+        totalIncome += tx.amount;
+      } else if (tx.type == 'withdrawal') {
+        totalExpenses += tx.amount;
+      }
+    }
+  final double balance = totalIncome - totalExpenses;
+        emit(DashboardLoaded(
+      recentTransactions: transactions,
+      totalIncome: totalIncome,
+      totalExpenses: totalExpenses,
+      totalBalance: balance,
+    ));
       } catch (e) {
         emit(DashboardError(e.toString()));
       }

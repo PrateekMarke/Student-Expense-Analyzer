@@ -244,46 +244,62 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 25),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      "Total Balance",
-                      style: TextStyle(color: Colors.white70),
+              BlocBuilder<DashboardBloc, DashboardState>(
+                builder: (context, dashState) {
+                  double balance = 0.0;
+                  double income = 0.0;
+                  double expenses = 0.0;
+
+                  if (dashState is DashboardLoaded) {
+                    balance = dashState.totalBalance;
+                    income = dashState.totalIncome;
+                    expenses = dashState.totalExpenses;
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    const Text(
-                      "₹12,450",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        _balanceStat(
-                          "Income",
-                          "₹15,000",
-                          Icons.arrow_downward,
-                          Colors.green,
+                        const Text(
+                          "Total Balance",
+                          style: TextStyle(color: Colors.white70),
                         ),
-                        _balanceStat(
-                          "Expenses",
-                          "₹8,320",
-                          Icons.arrow_upward,
-                          Colors.red,
+                        Text(
+                          "₹${balance.toStringAsFixed(0)}",
+                          style: TextStyle(
+                            color: balance < 0
+                                ? Colors.redAccent
+                                : Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _balanceStat(
+                              "Income",
+                              "₹${income.toStringAsFixed(0)}",
+                              Icons.arrow_downward,
+                              Colors.green,
+                            ),
+                            _balanceStat(
+                              "Expenses",
+                              "₹${expenses.toStringAsFixed(0)}",
+                              Icons.arrow_upward,
+                              Colors.red,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ),
