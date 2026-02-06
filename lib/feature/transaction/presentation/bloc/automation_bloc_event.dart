@@ -10,5 +10,6 @@ class TransactionDetected extends AutomationEvent {
 class CategorizeTransaction extends AutomationEvent {
   final DetectedTransaction transaction;
   final String category;
-  CategorizeTransaction(this.transaction, this.category);
+  final String title;
+  CategorizeTransaction(this.transaction, this.category, {required this.title});
 }

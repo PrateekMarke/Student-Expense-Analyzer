@@ -296,6 +296,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "10.1.1"
+  intl:
+    dependency: "direct main"
+    description:
+      name: intl
+      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.20.2"
   isolate_channel:
     dependency: transitive
     description:
@@ -597,6 +605,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  syncfusion_flutter_charts:
+    dependency: "direct main"
+    description:
+      name: syncfusion_flutter_charts
+      sha256: ed65384f3b100498cd19b8f28eaa12acccec97487097798318ac8fdcdbdda624
+      url: "https://pub.dev"
+    source: hosted
+    version: "32.1.25"
+  syncfusion_flutter_core:
+    dependency: transitive
+    description:
+      name: syncfusion_flutter_core
+      sha256: "44ec7f2bc3257d4d5ecae9ad2ed73ec1ca123323e0b1662441bc7f756530844f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "32.1.25"
   synchronized:
     dependency: transitive
     description:

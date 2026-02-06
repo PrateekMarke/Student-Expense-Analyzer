@@ -15,9 +15,10 @@ Future<bool> backgroudMessageHandler(SmsMessage message) async {
 
   if (AutomationParser.isTransaction(body)) {
     final amount = AutomationParser.extractAmount(body);
-    
-    if (amount != null) {
-      await NotificationManager.showCategorizationAlert(amount);
+    final title = AutomationParser.extractTitle(body);
+    final type = AutomationParser.extractType(body);
+    if (amount != null ) {
+      await NotificationManager.showCategorizationAlert(amount ,title, type );
     }
   }
 
@@ -33,9 +34,11 @@ class AutomationRepositoryImpl {
         final body = message.body ?? "";
         if (AutomationParser.isTransaction(body)) {
           final amount = AutomationParser.extractAmount(body);
+          final title = AutomationParser.extractTitle(body);
+          final type = AutomationParser.extractType(body);
           if (amount != null) {
             onDetected(
-              DetectedTransaction(amount: amount, rawBody: body, source: "SMS"),
+              DetectedTransaction(amount: amount, rawBody: body, source: "SMS", title: title, type: type),
             );
           }
         }
@@ -62,15 +65,16 @@ class AutomationRepositoryImpl {
   if (AutomationParser.isTransaction(fullText)) {
     final amount = AutomationParser.extractAmount(fullText);
     if (amount != null) {
-      
+      final String extractedTitle = AutomationParser.extractTitle(fullText );
     
-      onDetected(DetectedTransaction(amount: amount, rawBody: fullText, source: event.packageName ?? "App"));
+      onDetected(DetectedTransaction(amount: amount, rawBody: fullText, source: event.packageName ?? "App", title: extractedTitle, type: extractedTitle ));
       Workmanager().registerOneOffTask(
         "transaction_${DateTime.now().millisecondsSinceEpoch}", 
         "process_transaction",
         inputData: {
           'amount': amount,
           'body': fullText,
+          'title': title,
         },
       );
     }
