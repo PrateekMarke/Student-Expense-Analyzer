@@ -121,11 +121,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 _categoryProgress("Food", 3240, 0.39, Colors.orange),
                 _categoryProgress("Transport", 1850, 0.22, Colors.blue),
                 _categoryProgress("Rent", 2000, 0.24, Colors.purple),
-                _sectionHeader(
-                  "Recent Transactions",
-                  onSeeAll: () {
-                    context.read<DashboardBloc>().add(
-                      FetchDashboardData(limit: 10),
+
+                BlocBuilder<DashboardBloc, DashboardState>(
+                  builder: (context, state) {
+                    int currentCount = 0;
+                    if (state is DashboardLoaded) {
+                      currentCount = state.recentTransactions.length;
+                    }
+
+                    return _sectionHeader(
+                      "Recent Transactions",
+                      buttonLabel: currentCount > 5 ? "Show Less" : "See All",
+                      onSeeAll: () {
+                        if (currentCount <= 5) {
+                          context.read<DashboardBloc>().add(
+                            FetchDashboardData(limit: 10),
+                          );
+                        } else {
+                          context.read<DashboardBloc>().add(
+                            FetchDashboardData(limit: 5),
+                          );
+                        }
+                      },
                     );
                   },
                 ),
@@ -343,7 +360,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-Widget _sectionHeader(String title, {VoidCallback? onSeeAll}) {
+Widget _sectionHeader(
+  String title, {
+  VoidCallback? onSeeAll,
+  String buttonLabel = "See All",
+}) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -354,9 +375,12 @@ Widget _sectionHeader(String title, {VoidCallback? onSeeAll}) {
       if (onSeeAll != null)
         TextButton(
           onPressed: onSeeAll,
-          child: const Text(
-            "See All",
-            style: TextStyle(color: Color(0xFF6200EE)),
+          child: Text(
+            buttonLabel,
+            style: const TextStyle(
+              color: Color(0xFF6200EE),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
     ],

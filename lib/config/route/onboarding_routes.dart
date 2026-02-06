@@ -13,6 +13,7 @@ import 'package:student_expense_analyzer/feature/dashboard/presentation/pages/ma
 import 'package:student_expense_analyzer/feature/settings/presentation/pages/settings.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/pages/signup.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_bloc.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/transcation_bloc.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/pages/transaction.dart';
 
 final onboardingRoutes = <RouteBase>[
@@ -43,6 +44,7 @@ final onboardingRoutes = <RouteBase>[
           BlocProvider(create: (context) => sl<AuthBloc>()),
           BlocProvider(create: (context) => sl<AutomationBloc>()),
           BlocProvider(create: (context) => sl<DashboardBloc>()),
+          BlocProvider(create: (context) => sl<TransactionBloc>()),
         ],
         child: MainWrapperPage(navigationShell: navigationShell),
       ),

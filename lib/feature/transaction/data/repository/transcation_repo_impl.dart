@@ -1,5 +1,5 @@
 
-
+import 'package:student_expense_analyzer/feature/dashboard/domain/entites/recent_transcation.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/datasources/trans_remote_data_source.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/repositories/transcation_repo.dart';
 
@@ -23,4 +23,27 @@ class TransactionRepositoryImpl implements TransactionRepository {
     };
     return await remoteDataSource.createTransaction(data);
   }
+  @override
+@override
+  Future<List<RecentTranscation>> getTransactions({
+    String? type,
+    int page = 1,
+    int limit = 10,
+    String? period,
+    String? date,
+  }) async {
+
+    final queryParams = {
+      if (type != null && type != 'all') 'type': type,
+      'page': page,
+      'limit': limit,
+      if (period != null) 'period': period,
+      if (date != null) 'date': date,
+    };
+
+    return await remoteDataSource.getFilteredTransactions(queryParams);
+  }
+  
+  
+  
 }

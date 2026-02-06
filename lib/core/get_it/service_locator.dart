@@ -14,7 +14,9 @@ import 'package:student_expense_analyzer/feature/transaction/data/repository/aut
 import 'package:student_expense_analyzer/feature/transaction/data/repository/transcation_repo_impl.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/repositories/transcation_repo.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/usecase/create_tran.dart';
+import 'package:student_expense_analyzer/feature/transaction/domain/usecase/get_filtered_trans.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_bloc.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/transcation_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -56,10 +58,12 @@ Future<void> initInjection() async {
   // Use Cases
   sl.registerLazySingleton(() => CreateTransactionUseCase(sl()));
   sl.registerLazySingleton(() => GetRecentTransactions(sl()));
+  sl.registerLazySingleton(() => GetFilteredTransactions(sl()));
   // Blocs
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => AutomationBloc(sl<CreateTransactionUseCase>()));
   sl.registerFactory(
     () => DashboardBloc(getRecentTransactions: sl<GetRecentTransactions>()),
   );
+  sl.registerFactory(() => TransactionBloc(sl<GetFilteredTransactions>()));
 }

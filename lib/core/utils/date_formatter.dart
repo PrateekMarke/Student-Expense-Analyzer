@@ -25,4 +25,12 @@ class DateFormatter {
     final String time = DateFormat('hh:mm a').format(localDateTime);
     return "$dateLabel, $time";
   }
+  static String formatToShortDate(DateTime dateTime) {
+    try {
+      
+      return DateFormat('d MMM yyyy').format(dateTime);
+    } catch (e) {
+      return dateTime.toString();
+    }
+  }
 }
