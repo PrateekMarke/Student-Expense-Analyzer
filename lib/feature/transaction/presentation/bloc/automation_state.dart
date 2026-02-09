@@ -14,3 +14,7 @@ class AutomationLoaded extends AutomationState {
   AutomationLoaded({required List<DetectedTransaction> pendingTransactions}) 
     : super(pendingTransactions: pendingTransactions);
 }
+class TransactionSuccess extends AutomationState {
+  final String message;
+  TransactionSuccess(this.message);
+}

@@ -4,8 +4,8 @@ import 'package:get_it/get_it.dart';
 import 'package:student_expense_analyzer/core/get_it/service_locator.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/entites/dected_transaction.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/usecase/create_tran.dart';
-import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_bloc.dart';
-import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_event.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_event.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse details) {

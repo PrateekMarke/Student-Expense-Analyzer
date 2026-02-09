@@ -12,8 +12,8 @@ import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/das
 import 'package:student_expense_analyzer/feature/transaction/data/repository/automation_repository_impl.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/services/automation_parser.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/entites/dected_transaction.dart';
-import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_bloc.dart';
-import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_event.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_event.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

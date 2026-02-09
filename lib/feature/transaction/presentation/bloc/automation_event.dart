@@ -13,3 +13,17 @@ class CategorizeTransaction extends AutomationEvent {
   final String title;
   CategorizeTransaction(this.transaction, this.category, {required this.title});
 }
+
+class CreateManualTransaction extends AutomationEvent {
+  final double amount;
+  final String type;
+  final String category;
+  final String title;
+
+  CreateManualTransaction({
+    required this.amount,
+    required this.type,
+    required this.category,
+    required this.title,
+  });
+}

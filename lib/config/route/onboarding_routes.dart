@@ -13,7 +13,7 @@ import 'package:student_expense_analyzer/feature/auth/presentation/pages/login.d
 import 'package:student_expense_analyzer/feature/dashboard/presentation/pages/main%20navigation.dart';
 import 'package:student_expense_analyzer/feature/settings/presentation/pages/settings.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/pages/signup.dart';
-import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc_bloc.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/transcation_bloc.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/pages/transaction.dart';
 
