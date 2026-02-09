@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:student_expense_analyzer/feature/analytics/presentation/bloc/bloc/analytics_bloc.dart';
+import 'package:student_expense_analyzer/feature/analytics/presentation/bloc/bloc/analytics_event.dart';
+import 'package:student_expense_analyzer/feature/analytics/presentation/bloc/bloc/analytics_state.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-
-class AnalyticsScreen extends StatelessWidget {
+class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
+  @override
+  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
+}
+
+class _AnalyticsScreenState extends State<AnalyticsScreen> {
+  String _selectedPeriod = 'month';
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  void _fetch() {
+    context.read<AnalyticsBloc>().add(
+      FetchAnalyticsData(period: _selectedPeriod),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,71 +44,97 @@ class AnalyticsScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      childAspectRatio: 1.1,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      children: [
-                        _analyticsGridCard(
-                          "Top Spending Day",
-                          "Friday",
-                          Colors.orange[50]!,
-                          Colors.orange,
-                        ),
-                        _analyticsGridCard(
-                          "Avg Daily Spend",
-                          "₹277",
-                          Colors.green[50]!,
-                          Colors.green,
-                        ),
-                        _analyticsGridCard(
-                          "Most Used Category",
-                          "Food",
-                          Colors.purple[50]!,
-                          Colors.purple,
-                        ),
-                        _analyticsGridCard(
-                          "Savings Rate",
-                          "45%",
-                          Colors.blue[50]!,
-                          Colors.blue,
-                        ),
-                      ],
-                    ),
-                    // const SizedBox(height: 24),
-                    // const Align(
-                    //   alignment: Alignment.centerLeft,
-                    //   child: Text(
-                    //     "Income vs Expenses",
-                    //     style: TextStyle(
-                    //       fontSize: 18,
-                    //       fontWeight: FontWeight.bold,
-                    //     ),
-                    //   ),
-                    // ),
-                    // const SizedBox(height: 20),
-                    //bar chart
-                    _buildBarChart(),
-                    //pie chart
-                    const SizedBox(height: 24),
-                    _buildSpendingDistribution(),
-                    //spending pattern
-                    const SizedBox(height: 24),
-                    _buildWeeklySpendingTrend(),
-                    //last pattern
-                    const SizedBox(height: 24),
-                    _buildSpendingPatterns(),
-                  ],
-                ),
+
+              child: BlocBuilder<AnalyticsBloc, AnalyticsState>(
+                builder: (context, state) {
+                  if (state is AnalyticsLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is AnalyticsLoaded) {
+                    return _buildContent(state);
+                  } else if (state is AnalyticsError) {
+                    return Center(child: Text(state.message));
+                  }
+
+                  return const SizedBox();
+                },
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(AnalyticsLoaded state) {
+    if (state.weeklyTrendData.isEmpty && state.barChartData.isEmpty) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.analytics_outlined, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          const Text(
+            "No data available for this period",
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => _fetch(),
+            child: const Text("Refresh"),
+          )
+        ],
+      ),
+    );
+  }
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            childAspectRatio: 1.1,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            children: [
+              _analyticsGridCard(
+                state.period == 'week'
+                    ? "Top Spending Day"
+                    : (state.period == 'month'
+                          ? "Top Spending Date"
+                          : "Top Spending Month"),
+                state.topSpendingLabel,
+                Colors.orange[50]!,
+                Colors.orange,
+              ),
+              _analyticsGridCard(
+                "Avg Daily Spend",
+                state.avgDailySpend,
+                Colors.green[50]!,
+                Colors.green,
+              ),
+              _analyticsGridCard(
+                "Most Used Category",
+                "Food",
+                Colors.purple[50]!,
+                Colors.purple,
+              ),
+              _analyticsGridCard(
+                "Savings Rate",
+                "45%",
+                Colors.blue[50]!,
+                Colors.blue,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildBarChart(state.barChartData),
+          const SizedBox(height: 24),
+          _buildSpendingDistribution(),
+          const SizedBox(height: 24),
+          _buildWeeklySpendingTrend(state.weeklyTrendData),
+          const SizedBox(height: 24),
+          _buildSpendingPatterns(),
         ],
       ),
     );
@@ -122,17 +168,7 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
-  //bar chart
-  Widget _buildBarChart() {
-    final List<ChartData> chartData = [
-      ChartData('Jun', 12000, 9000),
-      ChartData('Jul', 13500, 9800),
-      ChartData('Aug', 15000, 11500),
-      ChartData('Sep', 14000, 10200),
-      ChartData('Oct', 16000, 12000),
-      ChartData('Nov', 15500, 8000),
-    ];
-
+  Widget _buildBarChart(List<ChartData> data) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -148,51 +184,32 @@ class AnalyticsScreen extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-
           SizedBox(
             height: 260,
             child: SfCartesianChart(
-              plotAreaBorderWidth: 0,
-
-              primaryXAxis: CategoryAxis(
-                majorGridLines: const MajorGridLines(width: 0),
-                axisLine: const AxisLine(width: 0),
-                labelStyle: const TextStyle(color: Colors.black54),
+              primaryXAxis: const CategoryAxis(
+                majorGridLines: MajorGridLines(width: 0),
               ),
-
-              primaryYAxis: NumericAxis(
-                minimum: 0,
-                maximum: 16000,
-                interval: 4000,
-                axisLine: const AxisLine(width: 0),
-                majorTickLines: const MajorTickLines(size: 0),
-                majorGridLines: const MajorGridLines(
-                  width: 1,
-                  dashArray: <double>[5, 5],
-                  color: Color(0xFFE0E0E0),
-                ),
+              legend: const Legend(
+                isVisible: true,
+                position: LegendPosition.bottom,
               ),
-
-              legend: Legend(isVisible: true, position: LegendPosition.bottom),
-
               series: <CartesianSeries<ChartData, String>>[
                 ColumnSeries<ChartData, String>(
                   name: 'Expenses',
-                  dataSource: chartData,
-                  xValueMapper: (ChartData data, _) => data.x,
-                  yValueMapper: (ChartData data, _) => data.y1,
+                  dataSource: data,
+                  xValueMapper: (ChartData d, _) => d.x,
+                  yValueMapper: (ChartData d, _) => d.y1,
                   color: Colors.orange,
                   borderRadius: BorderRadius.circular(8),
-                  width: 0.35,
                 ),
                 ColumnSeries<ChartData, String>(
                   name: 'Income',
-                  dataSource: chartData,
-                  xValueMapper: (ChartData data, _) => data.x,
-                  yValueMapper: (ChartData data, _) => data.y,
+                  dataSource: data,
+                  xValueMapper: (ChartData d, _) => d.x,
+                  yValueMapper: (ChartData d, _) => d.y,
                   color: Colors.green,
                   borderRadius: BorderRadius.circular(8),
-                  width: 0.35,
                 ),
               ],
             ),
@@ -211,7 +228,6 @@ class AnalyticsScreen extends StatelessWidget {
       PieData('Shopping', 980, Colors.pink),
       PieData('Others', 250, Colors.green),
     ];
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -259,18 +275,7 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
-  //spending pattern
-  Widget _buildWeeklySpendingTrend() {
-    final List<WeeklyData> weeklyData = [
-      WeeklyData('Mon', 800),
-      WeeklyData('Tue', 1150),
-      WeeklyData('Wed', 650),
-      WeeklyData('Thu', 1450),
-      WeeklyData('Fri', 2200),
-      WeeklyData('Sat', 1800),
-      WeeklyData('Sun', 900),
-    ];
-
+  Widget _buildWeeklySpendingTrend(List<WeeklyData> data) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -282,39 +287,26 @@ class AnalyticsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Weekly Spending Trend",
+            "Spending Trend",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-
           SizedBox(
             height: 220,
             child: SfCartesianChart(
-              plotAreaBorderWidth: 0,
-              primaryXAxis: CategoryAxis(
-                majorGridLines: const MajorGridLines(width: 0),
+              primaryXAxis: const CategoryAxis(
+                majorGridLines: MajorGridLines(width: 0),
               ),
-              primaryYAxis: NumericAxis(
-                minimum: 0,
-                maximum: 2200,
-                interval: 550,
-                majorGridLines: const MajorGridLines(
-                  width: 1,
-                  dashArray: <double>[5, 5],
-                ),
-              ),
-              series: <CartesianSeries>[
+
+              series: <CartesianSeries<WeeklyData, String>>[
                 SplineSeries<WeeklyData, String>(
-                  dataSource: weeklyData,
-                  xValueMapper: (WeeklyData data, _) => data.day,
-                  yValueMapper: (WeeklyData data, _) => data.amount,
+                  dataSource: data,
+
+                  xValueMapper: (WeeklyData d, _) => d.day.toString(),
+                  yValueMapper: (WeeklyData d, _) => d.amount,
                   color: Colors.deepPurple,
                   width: 3,
-                  markerSettings: const MarkerSettings(
-                    isVisible: true,
-                    height: 8,
-                    width: 8,
-                  ),
+                  markerSettings: const MarkerSettings(isVisible: true),
                 ),
               ],
             ),
@@ -324,7 +316,6 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
-  // Spending Patterns Insight Card
   Widget _buildSpendingPatterns() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -409,6 +400,7 @@ class AnalyticsScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   description,
+
                   style: const TextStyle(fontSize: 13, color: Colors.black54),
                 ),
               ],
@@ -425,25 +417,34 @@ class AnalyticsScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _filterChip("This Week", false),
-          _filterChip("This Month", true),
-          _filterChip("This Year", false),
+          _filterChip("This Week", 'week'),
+
+          _filterChip("This Month", 'month'),
+
+          _filterChip("This Year", 'year'),
         ],
       ),
     );
   }
 
-  Widget _filterChip(String label, bool isSelected) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.white : Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: isSelected ? Colors.purple : Colors.white),
+  Widget _filterChip(String label, String apiValue) {
+    final bool isSelected = _selectedPeriod == apiValue;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedPeriod = apiValue);
+        _fetch();
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(color: isSelected ? Colors.purple : Colors.white),
+        ),
       ),
     );
   }
@@ -451,20 +452,20 @@ class AnalyticsScreen extends StatelessWidget {
 
 class ChartData {
   ChartData(this.x, this.y, this.y1);
-  final String x; // Month
-  final double y; // Income
-  final double y1; // Expenses
+  final String x;
+  final num y;
+  final num y1;
 }
 
 class PieData {
   PieData(this.category, this.amount, this.color);
   final String category;
-  final double amount;
+  final num amount;
   final Color color;
 }
 
 class WeeklyData {
   WeeklyData(this.day, this.amount);
   final String day;
-  final double amount;
+  final num amount;
 }

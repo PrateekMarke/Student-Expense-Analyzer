@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:student_expense_analyzer/core/network/auth_interceptor.dart';
+import 'package:student_expense_analyzer/feature/analytics/presentation/bloc/bloc/analytics_bloc.dart';
 import 'package:student_expense_analyzer/feature/auth/data/repository/auth_repo_impl.dart';
 import 'package:student_expense_analyzer/feature/auth/domain/repositories/auth_repo.dart';
 
@@ -66,4 +67,6 @@ Future<void> initInjection() async {
     () => DashboardBloc(getRecentTransactions: sl<GetRecentTransactions>()),
   );
   sl.registerFactory(() => TransactionBloc(sl<GetFilteredTransactions>()));
+
+sl.registerFactory(() => AnalyticsBloc(sl<GetFilteredTransactions>()));
 }
