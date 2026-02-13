@@ -2,66 +2,90 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:student_expense_analyzer/feature/analytics/presentation/bloc/bloc/analytics_event.dart';
 import 'package:student_expense_analyzer/feature/analytics/presentation/pages/analytics.dart';
+
+import 'package:student_expense_analyzer/feature/dashboard/domain/usecase/get_category_spending.dart';
+import 'package:student_expense_analyzer/feature/dashboard/presentation/widgets/catergory_colour.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/usecase/get_filtered_trans.dart';
 import 'analytics_state.dart';
 
 class AnalyticsBloc extends Bloc<AnalyticsEvent, AnalyticsState> {
   final GetFilteredTransactions getTransactions;
+  final GetCategorySpending getCategorySpending;
 
-  AnalyticsBloc(this.getTransactions) : super(AnalyticsInitial()) {
+  AnalyticsBloc(this.getTransactions, {required this.getCategorySpending}) : super(AnalyticsInitial()) {
     on<FetchAnalyticsData>((event, emit) async {
       emit(AnalyticsLoading());
-   
-try {
-  final list = await getTransactions(type: 'all', period: event.period, limit: 100);
-  if (list.isEmpty) {
-  emit(AnalyticsLoaded(
-    barChartData: [],
-    weeklyTrendData: [],
-    period: event.period,
-    topSpendingLabel: "No Data",
-    avgDailySpend: "₹0",
-  ));
-  return;
-}
-  final barData = _processBarData(list, event.period);
-  final trendData = _processTrendData(list, event.period);
+      try {
+       
+        final results = await Future.wait([
+          getTransactions(type: 'all', period: event.period, limit: 100),
+          getCategorySpending(),
+        ]);
 
-  String topSpendingLabel = "N/A";
-  num maxAmount = -1;
-  num totalSpent = 0;
+        final list = results[0] as List;
+        final categoryTotals = results[1] as List;
 
-  for (var data in trendData) {
-    totalSpent += data.amount;
-    if (data.amount > maxAmount) {
-      maxAmount = data.amount;
-      topSpendingLabel = data.day; 
-    }
-  }
+        if (list.isEmpty && categoryTotals.isEmpty) {
+          emit(AnalyticsLoaded(
+            barChartData: [],
+            weeklyTrendData: [],
+            pieChartData: [],
+            period: event.period,
+            topSpendingLabel: "No Data",
+            avgDailySpend: "₹0",
+          ));
+          return;
+        }
 
+      
+        final pieData = categoryTotals.map((item) {
+          return PieData(
+            item.category,
+            item.withdrawalTotal,
+            getCategoryColor(item.category),
+          );
+        }).toList();
 
-  if (event.period == 'month' && topSpendingLabel != "N/A") {
-    topSpendingLabel = "${topSpendingLabel}th"; 
-  }
+       
+        final barData = _processBarData(list, event.period);
+        final trendData = _processTrendData(list, event.period);
 
+     
+        String topLabel = "N/A";
+        num maxAmt = -1;
+        num totalSpent = 0;
 
-  int divider = event.period == 'week' ? 7 : (event.period == 'month' ? 30 : 365);
-  String avgSpend = "₹${(totalSpent / divider).toStringAsFixed(0)}";
-  
+        for (var data in trendData) {
+          totalSpent += data.amount;
+          if (data.amount > maxAmt) {
+            maxAmt = data.amount;
+            topLabel = data.day;
+          }
+        }
 
-  emit(AnalyticsLoaded(
-    barChartData: barData,
-    weeklyTrendData: trendData,
-    period: event.period,
-    topSpendingLabel: topSpendingLabel,
-    avgDailySpend: avgSpend,
-  ));
-} catch (e) {
-  emit(AnalyticsError("Failed to fetch analytics: ${e.toString()}"));
-}
+        if (event.period == 'month' && topLabel != "N/A") topLabel = "${topLabel}th";
+
+        int divider = event.period == 'week' ? 7 : (event.period == 'month' ? 30 : 365);
+        String avgSpend = "₹${(totalSpent / divider).toStringAsFixed(0)}";
+
+        emit(AnalyticsLoaded(
+          barChartData: barData,
+          weeklyTrendData: trendData,
+          pieChartData: pieData,
+          period: event.period,
+          topSpendingLabel: topLabel,
+          avgDailySpend: avgSpend,
+        ));
+      } catch (e) {
+        emit(AnalyticsError("Failed to fetch analytics: ${e.toString()}"));
+      }
     });
   }
 
+
+
+ 
+}
   List<ChartData> _processBarData(List list, String period) {
    
     final Map<String, Map<String, double>> dataMap = {};
@@ -211,4 +235,4 @@ try {
       return dataMap.entries.map((e) => WeeklyData(e.key, e.value)).toList();
     }
   }
-}
+

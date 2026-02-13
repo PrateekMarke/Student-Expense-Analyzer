@@ -130,7 +130,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           const SizedBox(height: 24),
           _buildBarChart(state.barChartData),
           const SizedBox(height: 24),
-          _buildSpendingDistribution(),
+          _buildSpendingDistribution(state.pieChartData),
           const SizedBox(height: 24),
           _buildWeeklySpendingTrend(state.weeklyTrendData),
           const SizedBox(height: 24),
@@ -220,14 +220,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   //pie chart
-  Widget _buildSpendingDistribution() {
-    final List<PieData> pieData = [
-      PieData('Food', 3240, Colors.orange),
-      PieData('Transport', 1850, Colors.blue),
-      PieData('Rent', 2000, Colors.purple),
-      PieData('Shopping', 980, Colors.pink),
-      PieData('Others', 250, Colors.green),
-    ];
+  Widget _buildSpendingDistribution(List<PieData> data) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -238,34 +231,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Spending Distribution",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          const Text("Spending Distribution", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-
           SizedBox(
             height: 240,
             child: SfCircularChart(
-              legend: const Legend(
-                isVisible: true,
-                position: LegendPosition.bottom,
-                overflowMode: LegendItemOverflowMode.wrap,
-              ),
+              legend: const Legend(isVisible: true, position: LegendPosition.bottom),
               series: <CircularSeries>[
                 PieSeries<PieData, String>(
-                  dataSource: pieData,
-                  xValueMapper: (PieData data, _) => data.category,
-                  yValueMapper: (PieData data, _) => data.amount,
-                  pointColorMapper: (PieData data, _) => data.color,
-                  dataLabelSettings: const DataLabelSettings(
-                    isVisible: true,
-                    labelPosition: ChartDataLabelPosition.outside,
-                    textStyle: TextStyle(fontSize: 12),
-                  ),
-                  radius: '80%',
+                  dataSource: data,
+                  xValueMapper: (PieData d, _) => d.category,
+                  yValueMapper: (PieData d, _) => d.amount,
+                  pointColorMapper: (PieData d, _) => d.color,
+                  dataLabelSettings: const DataLabelSettings(isVisible: true, labelPosition: ChartDataLabelPosition.outside),
+                  enableTooltip: true,
                   explode: true,
-                  explodeIndex: 0,
                 ),
               ],
             ),

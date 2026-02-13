@@ -73,5 +73,10 @@ Future<void> initInjection() async {
   );
   sl.registerFactory(() => TransactionBloc(sl<GetFilteredTransactions>()));
 
-  sl.registerFactory(() => AnalyticsBloc(sl<GetFilteredTransactions>()));
+  sl.registerFactory(
+    () => AnalyticsBloc(
+      sl<GetFilteredTransactions>(),
+      getCategorySpending: sl<GetCategorySpending>(),
+    ),
+  );
 }
