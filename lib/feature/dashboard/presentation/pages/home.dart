@@ -9,6 +9,7 @@ import 'package:student_expense_analyzer/feature/dashboard/domain/entites/recent
 import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_state.dart';
+import 'package:student_expense_analyzer/feature/dashboard/presentation/widgets/catergory_colour.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/repository/automation_repository_impl.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/services/automation_parser.dart';
 import 'package:student_expense_analyzer/feature/transaction/domain/entites/dected_transaction.dart';
@@ -118,10 +119,35 @@ class _HomeScreenState extends State<HomeScreen> {
                   "Spending by Category",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                _categoryProgress("Food", 3240, 0.39, Colors.orange),
-                _categoryProgress("Transport", 1850, 0.22, Colors.blue),
-                _categoryProgress("Rent", 2000, 0.24, Colors.purple),
+                const SizedBox(height: 12),
+                BlocBuilder<DashboardBloc, DashboardState>(
+                  builder: (context, state) {
+                    if (state is DashboardLoaded) {
+                      return Column(
+                        children: state.categorySpending.map((item) {
+                          double percent = state.totalExpenses > 0
+                              ? item.withdrawalTotal / state.totalExpenses
+                              : 0.0;
 
+                          return _categoryProgress(
+                            item.category,
+                            item.withdrawalTotal.toInt(),
+                            percent.clamp(0.0, 1.0),
+                            getCategoryColor(item.category),
+                          );
+                        }).toList(),
+                      );
+                    }
+                    return const SizedBox(
+                      height: 100,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                ),
+
+                // _categoryProgress("Food", 3240, 0.39, Colors.orange),
+                // _categoryProgress("Transport", 1850, 0.22, Colors.blue),
+                // _categoryProgress("Rent", 2000, 0.24, Colors.purple),
                 BlocBuilder<DashboardBloc, DashboardState>(
                   builder: (context, state) {
                     int currentCount = 0;

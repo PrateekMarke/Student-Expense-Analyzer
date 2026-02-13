@@ -8,6 +8,7 @@ import 'package:student_expense_analyzer/feature/auth/domain/repositories/auth_r
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
 import 'package:student_expense_analyzer/feature/dashboard/data/repository/dashboard_repo_impl.dart';
 import 'package:student_expense_analyzer/feature/dashboard/domain/repository/dashboard_repository.dart';
+import 'package:student_expense_analyzer/feature/dashboard/domain/usecase/get_category_spending.dart';
 import 'package:student_expense_analyzer/feature/dashboard/domain/usecase/get_recent_transaction.dart';
 import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:student_expense_analyzer/feature/transaction/data/datasources/trans_remote_data_source.dart';
@@ -59,14 +60,18 @@ Future<void> initInjection() async {
   // Use Cases
   sl.registerLazySingleton(() => CreateTransactionUseCase(sl()));
   sl.registerLazySingleton(() => GetRecentTransactions(sl()));
+  sl.registerLazySingleton(() => GetCategorySpending(sl()));
   sl.registerLazySingleton(() => GetFilteredTransactions(sl()));
   // Blocs
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => AutomationBloc(sl<CreateTransactionUseCase>()));
   sl.registerFactory(
-    () => DashboardBloc(getRecentTransactions: sl<GetRecentTransactions>()),
+    () => DashboardBloc(
+      getRecentTransactions: sl<GetRecentTransactions>(),
+      getCategorySpending: sl<GetCategorySpending>(),
+    ),
   );
   sl.registerFactory(() => TransactionBloc(sl<GetFilteredTransactions>()));
 
-sl.registerFactory(() => AnalyticsBloc(sl<GetFilteredTransactions>()));
+  sl.registerFactory(() => AnalyticsBloc(sl<GetFilteredTransactions>()));
 }
