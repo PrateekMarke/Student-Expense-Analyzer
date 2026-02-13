@@ -67,25 +67,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Widget _buildContent(AnalyticsLoaded state) {
     if (state.weeklyTrendData.isEmpty && state.barChartData.isEmpty) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.analytics_outlined, size: 80, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          const Text(
-            "No data available for this period",
-            style: TextStyle(color: Colors.grey, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => _fetch(),
-            child: const Text("Refresh"),
-          )
-        ],
-      ),
-    );
-  }
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.analytics_outlined, size: 80, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            const Text(
+              "No data available for this period",
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            TextButton(onPressed: () => _fetch(), child: const Text("Refresh")),
+          ],
+        ),
+      );
+    }
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -115,13 +112,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               ),
               _analyticsGridCard(
                 "Most Used Category",
-                "Food",
+                state.mostUsedCategory,
                 Colors.purple[50]!,
                 Colors.purple,
               ),
               _analyticsGridCard(
                 "Savings Rate",
-                "45%",
+                state.savingsRate,
                 Colors.blue[50]!,
                 Colors.blue,
               ),
@@ -134,7 +131,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           const SizedBox(height: 24),
           _buildWeeklySpendingTrend(state.weeklyTrendData),
           const SizedBox(height: 24),
-          _buildSpendingPatterns(),
+          _buildSpendingPatterns(state),
         ],
       ),
     );
@@ -219,7 +216,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  //pie chart
   Widget _buildSpendingDistribution(List<PieData> data) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -231,19 +227,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Spending Distribution", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "Spending Distribution",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 240,
             child: SfCircularChart(
-              legend: const Legend(isVisible: true, position: LegendPosition.bottom),
+              legend: const Legend(
+                isVisible: true,
+                position: LegendPosition.bottom,
+              ),
               series: <CircularSeries>[
                 PieSeries<PieData, String>(
                   dataSource: data,
                   xValueMapper: (PieData d, _) => d.category,
                   yValueMapper: (PieData d, _) => d.amount,
                   pointColorMapper: (PieData d, _) => d.color,
-                  dataLabelSettings: const DataLabelSettings(isVisible: true, labelPosition: ChartDataLabelPosition.outside),
+                  dataLabelSettings: const DataLabelSettings(
+                    isVisible: true,
+                    labelPosition: ChartDataLabelPosition.outside,
+                  ),
                   enableTooltip: true,
                   explode: true,
                 ),
@@ -296,7 +301,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildSpendingPatterns() {
+  Widget _buildSpendingPatterns(AnalyticsLoaded state) {
+    bool isSavingWell = int.parse(state.savingsRate.replaceAll('%', '')) > 20;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -314,34 +320,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           const SizedBox(height: 16),
 
           _patternTile(
-            icon: Icons.calendar_today,
-            iconColor: Colors.blue,
-            bgColor: Colors.blue.shade50,
-            title: "Weekend Spending",
-            description:
-                "You spend 35% more on weekends, mainly on entertainment and dining out.",
-          ),
-
-          const SizedBox(height: 12),
-
-          _patternTile(
-            icon: Icons.trending_down,
-            iconColor: Colors.green,
-            bgColor: Colors.green.shade50,
-            title: "Improving Habits",
-            description:
-                "Your transport expenses decreased by 18% this month. Keep it up!",
-          ),
-
-          const SizedBox(height: 12),
-
-          _patternTile(
-            icon: Icons.warning_amber_rounded,
-            iconColor: Colors.orange,
-            bgColor: Colors.orange.shade50,
-            title: "Watch Out",
-            description:
-                "Food delivery expenses increased by 42% compared to last month.",
+            icon: isSavingWell ? Icons.trending_up : Icons.warning,
+            iconColor: isSavingWell ? Colors.green : Colors.orange,
+            bgColor: isSavingWell ? Colors.green[50]! : Colors.orange[50]!,
+            title: isSavingWell ? "Healthy Savings" : "Budget Alert",
+            description: isSavingWell
+                ? "Your savings rate of ${state.savingsRate} is excellent for this ${state.period}!"
+                : "Your spending is high relative to income. Try to reduce '${state.mostUsedCategory}' expenses.",
           ),
         ],
       ),

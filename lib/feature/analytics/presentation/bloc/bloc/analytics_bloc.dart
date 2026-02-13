@@ -24,7 +24,9 @@ class AnalyticsBloc extends Bloc<AnalyticsEvent, AnalyticsState> {
 
         final list = results[0] as List;
         final categoryTotals = results[1] as List;
-
+        Map<String, int> counts = {};
+  double totalIncome = 0;
+  double totalExpense = 0;
         if (list.isEmpty && categoryTotals.isEmpty) {
           emit(AnalyticsLoaded(
             barChartData: [],
@@ -32,11 +34,30 @@ class AnalyticsBloc extends Bloc<AnalyticsEvent, AnalyticsState> {
             pieChartData: [],
             period: event.period,
             topSpendingLabel: "No Data",
-            avgDailySpend: "₹0",
+            avgDailySpend: "₹0", mostUsedCategory: 'No Data', savingsRate: '0%',
           ));
           return;
         }
+for (var tx in list) {
+    if (tx.type == 'withdrawal') {
+      counts[tx.category] = (counts[tx.category] ?? 0) + 1;
+      totalExpense += tx.amount;
+    } else {
+      totalIncome += tx.amount;
+    }
+  }
 
+  String mostUsed = "N/A";
+  if (counts.isNotEmpty) {
+    mostUsed = counts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+  }
+
+
+  String savingsRate = "0%";
+  if (totalIncome > 0) {
+    double rate = ((totalIncome - totalExpense) / totalIncome) * 100;
+    savingsRate = "${rate.clamp(0, 100).toStringAsFixed(0)}%";
+  }
       
         final pieData = categoryTotals.map((item) {
           return PieData(
@@ -74,7 +95,8 @@ class AnalyticsBloc extends Bloc<AnalyticsEvent, AnalyticsState> {
           pieChartData: pieData,
           period: event.period,
           topSpendingLabel: topLabel,
-          avgDailySpend: avgSpend,
+          avgDailySpend: avgSpend, mostUsedCategory: mostUsed,
+    savingsRate: savingsRate,
         ));
       } catch (e) {
         emit(AnalyticsError("Failed to fetch analytics: ${e.toString()}"));

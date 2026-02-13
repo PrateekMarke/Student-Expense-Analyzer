@@ -17,6 +17,8 @@ class AnalyticsLoaded extends AnalyticsState {
   final String period;
   final String topSpendingLabel;
   final String avgDailySpend;
+  final String mostUsedCategory; 
+  final String savingsRate;
 
   AnalyticsLoaded({
     required this.barChartData,
@@ -24,7 +26,7 @@ class AnalyticsLoaded extends AnalyticsState {
     required this.pieChartData,
     required this.period,
     required this.topSpendingLabel,
-    required this.avgDailySpend,
+    required this.avgDailySpend, required this.mostUsedCategory, required this.savingsRate,
   });
 
   @override
@@ -34,7 +36,8 @@ class AnalyticsLoaded extends AnalyticsState {
     period,
     topSpendingLabel,
     pieChartData,
-    avgDailySpend,
+    avgDailySpend,mostUsedCategory,
+    savingsRate,
   ];
 }
 
