@@ -6,6 +6,10 @@ import 'package:student_expense_analyzer/feature/auth/data/repository/auth_repo_
 import 'package:student_expense_analyzer/feature/auth/domain/repositories/auth_repo.dart';
 
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
+import 'package:student_expense_analyzer/feature/budget/data/repository/budget_repo_impl.dart';
+import 'package:student_expense_analyzer/feature/budget/domain/repository/budget_repo.dart';
+import 'package:student_expense_analyzer/feature/budget/domain/usecases/manage_saving_goal.dart';
+import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_bloc.dart';
 import 'package:student_expense_analyzer/feature/dashboard/data/repository/dashboard_repo_impl.dart';
 import 'package:student_expense_analyzer/feature/dashboard/domain/repository/dashboard_repository.dart';
 import 'package:student_expense_analyzer/feature/dashboard/domain/usecase/get_category_spending.dart';
@@ -56,12 +60,15 @@ Future<void> initInjection() async {
   sl.registerLazySingleton<AutomationRepositoryImpl>(
     () => AutomationRepositoryImpl(),
   );
-
+  sl.registerLazySingleton<BudgetRepository>(() => BudgetRepositoryImpl(sl()));
   // Use Cases
   sl.registerLazySingleton(() => CreateTransactionUseCase(sl()));
   sl.registerLazySingleton(() => GetRecentTransactions(sl()));
   sl.registerLazySingleton(() => GetCategorySpending(sl()));
   sl.registerLazySingleton(() => GetFilteredTransactions(sl()));
+  sl.registerLazySingleton(() => GetSavingGoalUseCase(sl()));
+  sl.registerLazySingleton(() => SetSavingGoalUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateSavingGoalUseCase(sl()));
   // Blocs
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => AutomationBloc(sl<CreateTransactionUseCase>()));
@@ -77,6 +84,13 @@ Future<void> initInjection() async {
     () => AnalyticsBloc(
       sl<GetFilteredTransactions>(),
       getCategorySpending: sl<GetCategorySpending>(),
+    ),
+  );
+  sl.registerFactory(
+    () => BudgetBloc(
+      getSavingGoal: sl(),
+      setSavingGoal: sl(),
+      updateSavingGoalUseCase: sl(),
     ),
   );
 }

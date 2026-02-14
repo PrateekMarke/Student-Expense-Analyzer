@@ -145,9 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
 
-                // _categoryProgress("Food", 3240, 0.39, Colors.orange),
-                // _categoryProgress("Transport", 1850, 0.22, Colors.blue),
-                // _categoryProgress("Rent", 2000, 0.24, Colors.purple),
+          
                 BlocBuilder<DashboardBloc, DashboardState>(
                   builder: (context, state) {
                     int currentCount = 0;

@@ -4,6 +4,7 @@ import 'package:student_expense_analyzer/core/get_it/service_locator.dart';
 import 'package:student_expense_analyzer/feature/analytics/presentation/bloc/bloc/analytics_bloc.dart';
 import 'package:student_expense_analyzer/feature/analytics/presentation/pages/analytics.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
+import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_bloc.dart';
 import 'package:student_expense_analyzer/feature/budget/presentation/pages/budget.dart';
 import 'package:student_expense_analyzer/config/route/app_router.dart';
 import 'package:student_expense_analyzer/core/pages/splash_screen.dart';
@@ -47,6 +48,7 @@ final onboardingRoutes = <RouteBase>[
           BlocProvider(create: (context) => sl<DashboardBloc>()),
           BlocProvider(create: (context) => sl<TransactionBloc>()),
           BlocProvider(create: (context) => sl<AnalyticsBloc>()),
+          BlocProvider(create: (context) => sl<BudgetBloc>()),
         ],
         child: MainWrapperPage(navigationShell: navigationShell),
       ),
