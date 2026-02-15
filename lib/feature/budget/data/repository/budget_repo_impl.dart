@@ -9,50 +9,81 @@ class BudgetRepositoryImpl implements BudgetRepository {
 
   @override
   Future<SavingGoalModel> getSavingGoal() async {
-    final response = await dio.get('v1/transaction/saving-goal');
-    return SavingGoalModel.fromJson(response.data['data']);
+    try {
+      final response = await dio.get('v1/transaction/saving-goal');
+      return SavingGoalModel.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404 ||
+          e.response?.data['statusCode'] == "10001") {
+        return SavingGoalModel(
+          id: '',
+          targetAmount: 0.0,
+          remainingAmount: 0.0,
+          expensesAmount: 0.0,
+          createdAt: DateTime.now(),
+        );
+      }
+      rethrow;
+    }
   }
 
   @override
   Future<SavingGoalModel> setSavingGoal(double amount) async {
-    final response = await dio.post('v1/transaction/saving-goal', data: {'target_amount': amount});
+    final response = await dio.post(
+      'v1/transaction/saving-goal',
+      data: {'target_amount': amount},
+    );
     return SavingGoalModel.fromJson(response.data['data']);
   }
 
   @override
   Future<SavingGoalModel> updateSavingGoal(String id, double amount) async {
-    final response = await dio.put('v1/transaction/saving-goal/$id', data: {'target_amount': amount});
+    final response = await dio.put(
+      'v1/transaction/saving-goal/$id',
+      data: {'target_amount': amount},
+    );
     return SavingGoalModel.fromJson(response.data['data']);
   }
- @override
-Future<List<CategorySavingGoalModel>> catGetSavingGoal() async {
-  final response = await dio.get('v1/transaction/saving-category-goal');
-  
-  final List data = response.data['data'] ?? [];
-  return data.map((json) => CategorySavingGoalModel.fromJson(json)).toList();
-}
 
-@override
-Future<CategorySavingGoalModel> catSetSavingGoal(String category, double amount) async {
-  final response = await dio.post(
-    'v1/transaction/saving-category-goal', 
-    data: {
-      'category': category, 
-      'target_amount': amount
-    },
-  );
-  return CategorySavingGoalModel.fromJson(response.data['data']);
-}
+  @override
+  Future<List<CategorySavingGoalModel>> catGetSavingGoal() async {
+    try {
+      final response = await dio.get('v1/transaction/saving-category-goal');
+      final List data = response.data['data'] ?? [];
+      return data
+          .map((json) => CategorySavingGoalModel.fromJson(json))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404 ||
+          e.response?.data['statusCode'] == "10001") {
+        return [];
+      }
+      rethrow;
+    }
+  }
 
-@override
-Future<CategorySavingGoalModel> catUpdateSavingGoal(String id, String category, double amount) async {
-  final response = await dio.put(
-    'v1/transaction/saving-category-goal/$id', 
-    data: {
-      'category': category, 
-      'target_amount': amount
-    },
-  );
-  return CategorySavingGoalModel.fromJson(response.data['data']);
-}
+  @override
+  Future<CategorySavingGoalModel> catSetSavingGoal(
+    String category,
+    double amount,
+  ) async {
+    final response = await dio.post(
+      'v1/transaction/saving-category-goal',
+      data: {'category': category, 'target_amount': amount},
+    );
+    return CategorySavingGoalModel.fromJson(response.data['data']);
+  }
+
+  @override
+  Future<CategorySavingGoalModel> catUpdateSavingGoal(
+    String id,
+    String category,
+    double amount,
+  ) async {
+    final response = await dio.put(
+      'v1/transaction/saving-category-goal/$id',
+      data: {'category': category, 'target_amount': amount},
+    );
+    return CategorySavingGoalModel.fromJson(response.data['data']);
+  }
 }

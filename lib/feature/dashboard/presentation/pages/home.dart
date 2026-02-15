@@ -123,6 +123,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 BlocBuilder<DashboardBloc, DashboardState>(
                   builder: (context, state) {
                     if (state is DashboardLoaded) {
+                      if (state.categorySpending.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Text(
+                            "No spending categories yet. Add a transaction to see insights!",
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
                       return Column(
                         children: state.categorySpending.map((item) {
                           double percent = state.totalExpenses > 0
@@ -145,7 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
 
-          
                 BlocBuilder<DashboardBloc, DashboardState>(
                   builder: (context, state) {
                     int currentCount = 0;

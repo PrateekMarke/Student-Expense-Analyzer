@@ -73,11 +73,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }) {
     final budgetBloc = context.read<BudgetBloc>();
     final List<String> existingCategories = [];
-  if (budgetBloc.state is BudgetLoaded) {
-    existingCategories.addAll(
-      (budgetBloc.state as BudgetLoaded).categoryGoals.map((e) => e.category)
-    );
-  }
+    if (budgetBloc.state is BudgetLoaded) {
+      existingCategories.addAll(
+        (budgetBloc.state as BudgetLoaded).categoryGoals.map((e) => e.category),
+      );
+    }
     final List<String> categories = [
       'Food',
       'Transport',
@@ -97,7 +97,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) {
-          final bool isDuplicate = goal == null && existingCategories.contains(selectedCategory);
+          final bool isDuplicate =
+              goal == null && existingCategories.contains(selectedCategory);
           return AlertDialog(
             title: Text(
               goal == null ? "Add Category Budget" : "Update ${goal.category}",
@@ -111,7 +112,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                     decoration: InputDecoration(
                       labelText: "Select Category",
                       border: const OutlineInputBorder(),
-                      errorText: isDuplicate ? "Budget already exists for this category" : null,
+                      errorText: isDuplicate
+                          ? "Budget already exists for this category"
+                          : null,
                     ),
                     items: categories.map((String category) {
                       return DropdownMenuItem<String>(
@@ -140,24 +143,29 @@ class _BudgetScreenState extends State<BudgetScreen> {
               ],
             ),
             actions: [
-              
               ElevatedButton(
-                onPressed: isDuplicate ? null : () {
-                  final amt = double.tryParse(amountController.text);
-                  if (amt != null && selectedCategory.isNotEmpty) {
-                    if (goal == null) {
-                      budgetBloc.add(SetCategoryGoal(selectedCategory, amt));
-                    } else {
-                      budgetBloc.add(
-                        UpdateCategoryGoal(goal.id, goal.category, amt),
-                      );
-                    }
-                    Navigator.pop(dialogContext);
-                  }
-                },
+                onPressed: isDuplicate
+                    ? null
+                    : () {
+                        final amt = double.tryParse(amountController.text);
+                        if (amt != null && selectedCategory.isNotEmpty) {
+                          if (goal == null) {
+                            budgetBloc.add(
+                              SetCategoryGoal(selectedCategory, amt),
+                            );
+                          } else {
+                            budgetBloc.add(
+                              UpdateCategoryGoal(goal.id, goal.category, amt),
+                            );
+                          }
+                          Navigator.pop(dialogContext);
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
-                backgroundColor: isDuplicate ? Colors.grey : const Color(0xFF6200EE),
-              ),
+                  backgroundColor: isDuplicate
+                      ? Colors.grey
+                      : const Color(0xFF6200EE),
+                ),
                 child: const Text("Save"),
               ),
             ],
@@ -169,109 +177,105 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<BudgetBloc, BudgetState>(
-      listener: (context, state) {
-        if (state is BudgetLoaded) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Budget updated successfully!")),
-          );
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFF6200EE),
-        appBar: AppBar(
-          title: const Text(
-            "Budget Manager",
-            style: TextStyle(color: Colors.white),
+    return Scaffold(
+      backgroundColor: const Color(0xFF6200EE),
+      appBar: AppBar(
+        title: const Text(
+          "Budget Manager",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              _showSetGoalDialog(context);
+            },
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              "Add Budget",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          actions: [
-            TextButton.icon(
-              onPressed: () {
-                _showSetGoalDialog(context);
-              },
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                "Add Budget",
-                style: TextStyle(color: Colors.white),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildSummaryCard(),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
               ),
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            _buildSummaryCard(),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                ),
-                child: ListView(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Category Budgets",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+              child: ListView(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Category Budgets",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                        IconButton(
-                          onPressed: () => _showCategoryGoalDialog(context),
-                          icon: const Icon(
-                            Icons.add_circle_outline,
-                            color: Color(0xFF6200EE),
-                          ),
+                      ),
+                      IconButton(
+                        onPressed: () => _showCategoryGoalDialog(context),
+                        icon: const Icon(
+                          Icons.add_circle_outline,
+                          color: Color(0xFF6200EE),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    BlocBuilder<BudgetBloc, BudgetState>(
-                      builder: (context, state) {
-                        if (state is BudgetLoaded) {
-                          if (state.categoryGoals.isEmpty) {
-                            return const Center(
-                              child: Text(
-                                "No category budgets set.",
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            );
-                          }
-                          return Column(
-                            children: state.categoryGoals.map((goal) {
-                              double percent = goal.targetAmount > 0
-                                  ? (goal.expensesAmount / goal.targetAmount)
-                                        .clamp(0.0, 1.0)
-                                  : 0.0;
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  BlocBuilder<BudgetBloc, BudgetState>(
+                    builder: (context, state) {
+                      if (state is BudgetLoaded &&
+                              state.categoryGoals.isEmpty ||
+                          state is BudgetError) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Text(
+                              "No category budgets set. Tap + to add one!",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      }
 
-                              return _budgetTile(
-                                goal.category,
-                                "₹${goal.expensesAmount.toInt()} of ₹${goal.targetAmount.toInt()}",
-                                percent,
-                                getCategoryColor(goal.category),
-                                isOver: goal.remainingAmount < 0,
-                                onEdit: () => _showCategoryGoalDialog(
-                                  context,
-                                  goal: goal,
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                    ),
-                  ],
-                ),
+                      if (state is BudgetLoaded) {
+                        return Column(
+                          children: state.categoryGoals.map((goal) {
+                            double percent = goal.targetAmount > 0
+                                ? (goal.expensesAmount / goal.targetAmount)
+                                      .clamp(0.0, 1.0)
+                                : 0.0;
+
+                            return _budgetTile(
+                              goal.category,
+                              "₹${goal.expensesAmount.toInt()} of ₹${goal.targetAmount.toInt()}",
+                              percent,
+                              getCategoryColor(goal.category),
+                              isOver: goal.remainingAmount < 0,
+                              onEdit: () =>
+                                  _showCategoryGoalDialog(context, goal: goal),
+                            );
+                          }).toList(),
+                        );
+                      }
+
+                      return const SizedBox();
+                    },
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -301,8 +305,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
           percent = target > 0 ? (spent / target).clamp(0.0, 1.0) : 0.0;
         }
-        if (target == 0 && remaining == 0 && state is BudgetLoaded) {
-          print("target: $target, remaining: $remaining, state: $state");
+
+        if (state is BudgetError) {
+          target = 0.0;
+          remaining = 0.0;
+          spent = 0.0;
+          percent = 0.0;
         }
         int displayPercent = (percent * 100).toInt();
 
