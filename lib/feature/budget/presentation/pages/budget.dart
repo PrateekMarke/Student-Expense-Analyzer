@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:student_expense_analyzer/feature/budget/domain/entites/category_saving_goal.dart';
 import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_bloc.dart';
 import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_event.dart';
 import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_state.dart';
+import 'package:student_expense_analyzer/feature/dashboard/presentation/widgets/catergory_colour.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -15,7 +17,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<BudgetBloc>().add(FetchSavingGoal());
+    context.read<BudgetBloc>().add(FetchAllBudgets());
   }
 
   void _showSetGoalDialog(BuildContext context, {double? currentAmount}) {
@@ -65,6 +67,106 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
+  void _showCategoryGoalDialog(
+    BuildContext context, {
+    CategorySavingGoal? goal,
+  }) {
+    final budgetBloc = context.read<BudgetBloc>();
+    final List<String> existingCategories = [];
+  if (budgetBloc.state is BudgetLoaded) {
+    existingCategories.addAll(
+      (budgetBloc.state as BudgetLoaded).categoryGoals.map((e) => e.category)
+    );
+  }
+    final List<String> categories = [
+      'Food',
+      'Transport',
+      'Rent',
+      'Shopping',
+      'Other',
+      'Income',
+    ];
+
+    String selectedCategory = goal?.category ?? categories.first;
+
+    final amountController = TextEditingController(
+      text: goal != null ? goal.targetAmount.toStringAsFixed(0) : "",
+    );
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          final bool isDuplicate = goal == null && existingCategories.contains(selectedCategory);
+          return AlertDialog(
+            title: Text(
+              goal == null ? "Add Category Budget" : "Update ${goal.category}",
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (goal == null) ...[
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: "Select Category",
+                      border: const OutlineInputBorder(),
+                      errorText: isDuplicate ? "Budget already exists for this category" : null,
+                    ),
+                    items: categories.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() => selectedCategory = newValue);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                ],
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: "Monthly Target Amount",
+                    prefixText: "₹",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              
+              ElevatedButton(
+                onPressed: isDuplicate ? null : () {
+                  final amt = double.tryParse(amountController.text);
+                  if (amt != null && selectedCategory.isNotEmpty) {
+                    if (goal == null) {
+                      budgetBloc.add(SetCategoryGoal(selectedCategory, amt));
+                    } else {
+                      budgetBloc.add(
+                        UpdateCategoryGoal(goal.id, goal.category, amt),
+                      );
+                    }
+                    Navigator.pop(dialogContext);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                backgroundColor: isDuplicate ? Colors.grey : const Color(0xFF6200EE),
+              ),
+                child: const Text("Save"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<BudgetBloc, BudgetState>(
@@ -109,32 +211,60 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 ),
                 child: ListView(
                   children: [
-                    const Text(
-                      "Category Budgets",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Category Budgets",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _showCategoryGoalDialog(context),
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            color: Color(0xFF6200EE),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    _budgetTile(
-                      "Food",
-                      "₹3,240 of ₹4,000",
-                      0.81,
-                      Colors.orange,
-                    ),
-                    _budgetTile(
-                      "Transport",
-                      "₹1,850 of ₹2,000",
-                      0.92,
-                      Colors.blue,
-                    ),
-                    _budgetTile(
-                      "Rent",
-                      "₹2,000 of ₹2,000",
-                      1.0,
-                      Colors.red,
-                      isOver: true,
+                    const SizedBox(height: 10),
+                    BlocBuilder<BudgetBloc, BudgetState>(
+                      builder: (context, state) {
+                        if (state is BudgetLoaded) {
+                          if (state.categoryGoals.isEmpty) {
+                            return const Center(
+                              child: Text(
+                                "No category budgets set.",
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            );
+                          }
+                          return Column(
+                            children: state.categoryGoals.map((goal) {
+                              double percent = goal.targetAmount > 0
+                                  ? (goal.expensesAmount / goal.targetAmount)
+                                        .clamp(0.0, 1.0)
+                                  : 0.0;
+
+                              return _budgetTile(
+                                goal.category,
+                                "₹${goal.expensesAmount.toInt()} of ₹${goal.targetAmount.toInt()}",
+                                percent,
+                                getCategoryColor(goal.category),
+                                isOver: goal.remainingAmount < 0,
+                                onEdit: () => _showCategoryGoalDialog(
+                                  context,
+                                  goal: goal,
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }
+                        return const SizedBox();
+                      },
                     ),
                   ],
                 ),
@@ -278,6 +408,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     double val,
     Color color, {
     bool isOver = false,
+    VoidCallback? onEdit,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -290,11 +421,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.fastfood, color: color),
+              Icon(_getCategoryIcon(title), color: color),
               const SizedBox(width: 12),
               Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
               const Spacer(),
-              const Icon(Icons.edit, size: 16, color: Colors.grey),
+              IconButton(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit, size: 16, color: Colors.grey),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -311,5 +445,22 @@ class _BudgetScreenState extends State<BudgetScreen> {
         ],
       ),
     );
+  }
+}
+
+IconData _getCategoryIcon(String category) {
+  switch (category.toLowerCase()) {
+    case 'food':
+      return Icons.fastfood;
+    case 'transport':
+      return Icons.directions_bus;
+    case 'rent':
+      return Icons.home;
+    case 'shopping':
+      return Icons.shopping_bag;
+    case 'income':
+      return Icons.currency_rupee;
+    default:
+      return Icons.category;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:student_expense_analyzer/feature/budget/domain/entites/category_saving_goal.dart';
 import 'package:student_expense_analyzer/feature/budget/domain/entites/saving_goal.dart';
 
 
@@ -15,11 +16,14 @@ class BudgetLoading extends BudgetState {}
 
 class BudgetLoaded extends BudgetState {
   final SavingGoal savingGoal;
-
-  const BudgetLoaded({required this.savingGoal});
+  final List<CategorySavingGoal> categoryGoals; 
+  const BudgetLoaded({
+    required this.savingGoal, 
+    this.categoryGoals = const [],
+  });
 
   @override
-  List<Object?> get props => [savingGoal];
+  List<Object?> get props => [savingGoal, categoryGoals];
 }
 
 class BudgetError extends BudgetState {

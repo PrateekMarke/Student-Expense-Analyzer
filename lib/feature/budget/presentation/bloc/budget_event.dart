@@ -7,7 +7,6 @@ abstract class BudgetEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class FetchSavingGoal extends BudgetEvent {}
 class SetSavingGoal extends BudgetEvent {
   final double amount;
 
@@ -23,4 +22,18 @@ class UpdateSavingGoal extends BudgetEvent {
 
   @override
   List<Object?> get props => [amount];
+}
+class FetchAllBudgets extends BudgetEvent {}
+
+class SetCategoryGoal extends BudgetEvent {
+  final String category;
+  final double amount;
+  const SetCategoryGoal(this.category, this.amount);
+}
+
+class UpdateCategoryGoal extends BudgetEvent {
+  final String id;
+  final String category;
+  final double amount;
+  const UpdateCategoryGoal(this.id, this.category, this.amount);
 }

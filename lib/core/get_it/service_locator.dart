@@ -8,6 +8,7 @@ import 'package:student_expense_analyzer/feature/auth/domain/repositories/auth_r
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
 import 'package:student_expense_analyzer/feature/budget/data/repository/budget_repo_impl.dart';
 import 'package:student_expense_analyzer/feature/budget/domain/repository/budget_repo.dart';
+import 'package:student_expense_analyzer/feature/budget/domain/usecases/manage_cat_saving_goal.dart';
 import 'package:student_expense_analyzer/feature/budget/domain/usecases/manage_saving_goal.dart';
 import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_bloc.dart';
 import 'package:student_expense_analyzer/feature/dashboard/data/repository/dashboard_repo_impl.dart';
@@ -69,6 +70,9 @@ Future<void> initInjection() async {
   sl.registerLazySingleton(() => GetSavingGoalUseCase(sl()));
   sl.registerLazySingleton(() => SetSavingGoalUseCase(sl()));
   sl.registerLazySingleton(() => UpdateSavingGoalUseCase(sl()));
+  sl.registerLazySingleton(() => GetCategorySavingGoalsUseCase(sl())); 
+  sl.registerLazySingleton(() => CreateCategoryGoalUseCase(sl())); 
+  sl.registerLazySingleton(() => UpdateCategoryGoalUseCase(sl())); 
   // Blocs
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => AutomationBloc(sl<CreateTransactionUseCase>()));
@@ -90,7 +94,7 @@ Future<void> initInjection() async {
     () => BudgetBloc(
       getSavingGoal: sl(),
       setSavingGoal: sl(),
-      updateSavingGoalUseCase: sl(),
+      updateSavingGoalUseCase: sl(), getCatGoals: sl(), setCatGoal: sl(), updateCatGoal: sl(),
     ),
   );
 }
