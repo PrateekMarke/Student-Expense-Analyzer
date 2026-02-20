@@ -5,6 +5,8 @@ import 'package:student_expense_analyzer/core/services/notification_manager.dart
 import 'package:student_expense_analyzer/core/utils/date_formatter.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_bloc.dart';
 import 'package:student_expense_analyzer/feature/auth/presentation/bloc/auth_state.dart';
+import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_bloc.dart';
+import 'package:student_expense_analyzer/feature/budget/presentation/bloc/budget_event.dart';
 import 'package:student_expense_analyzer/feature/dashboard/domain/entites/recent_transcation.dart';
 import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:student_expense_analyzer/feature/dashboard/presentation/bloc/dashboard_event.dart';
@@ -15,6 +17,7 @@ import 'package:student_expense_analyzer/feature/transaction/data/services/autom
 import 'package:student_expense_analyzer/feature/transaction/domain/entites/dected_transaction.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_bloc.dart';
 import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_event.dart';
+import 'package:student_expense_analyzer/feature/transaction/presentation/bloc/automation_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -90,135 +93,154 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildHeader(context),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Smart Insights",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                const SizedBox(height: 12),
-                _insightCard(
-                  "You spent 23% more on food this week",
-                  Colors.orange.withOpacity(0.1),
-                  Colors.orange,
-                ),
-                _insightCard(
-                  "Great! You're on track to meet your savings goal",
-                  Colors.green.withOpacity(0.1),
-                  Colors.green,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  "Spending by Category",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                const SizedBox(height: 12),
-                BlocBuilder<DashboardBloc, DashboardState>(
-                  builder: (context, state) {
-                    if (state is DashboardLoaded) {
-                      if (state.categorySpending.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Text(
-                            "No spending categories yet. Add a transaction to see insights!",
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
-                            textAlign: TextAlign.center,
-                          ),
+    return MultiBlocListener(
+      listeners: [BlocListener<AutomationBloc, AutomationState>(
+        listener: (context, state) {
+        
+          if (state is AutomationLoaded || state is TransactionDetected) {
+           
+            context.read<DashboardBloc>().add(FetchDashboardData(limit: 5));
+            
+        
+            context.read<BudgetBloc>().add(FetchAllBudgets());
+          }
+        },
+      ),],
+      child: RefreshIndicator(
+        onRefresh: () async{ context.read<DashboardBloc>().add(FetchDashboardData(limit: 5));
+        await Future.delayed(const Duration(milliseconds: 500)); },
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Smart Insights",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(height: 12),
+                    _insightCard(
+                      "You spent 23% more on food this week",
+                      Colors.orange.withOpacity(0.1),
+                      Colors.orange,
+                    ),
+                    _insightCard(
+                      "Great! You're on track to meet your savings goal",
+                      Colors.green.withOpacity(0.1),
+                      Colors.green,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Spending by Category",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(height: 12),
+                    BlocBuilder<DashboardBloc, DashboardState>(
+                      builder: (context, state) {
+                        if (state is DashboardLoaded) {
+                          if (state.categorySpending.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Text(
+                                "No spending categories yet. Add a transaction to see insights!",
+                                style: TextStyle(color: Colors.grey, fontSize: 14),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          }
+                          return Column(
+                            children: state.categorySpending.map((item) {
+                              double percent = state.totalExpenses > 0
+                                  ? item.withdrawalTotal / state.totalExpenses
+                                  : 0.0;
+        
+                              return _categoryProgress(
+                                item.category,
+                                item.withdrawalTotal.toInt(),
+                                percent.clamp(0.0, 1.0),
+                                getCategoryColor(item.category),
+                              );
+                            }).toList(),
+                          );
+                        }
+                        return const SizedBox(
+                          height: 100,
+                          child: Center(child: CircularProgressIndicator()),
                         );
-                      }
-                      return Column(
-                        children: state.categorySpending.map((item) {
-                          double percent = state.totalExpenses > 0
-                              ? item.withdrawalTotal / state.totalExpenses
-                              : 0.0;
-
-                          return _categoryProgress(
-                            item.category,
-                            item.withdrawalTotal.toInt(),
-                            percent.clamp(0.0, 1.0),
-                            getCategoryColor(item.category),
+                      },
+                    ),
+        
+                    BlocBuilder<DashboardBloc, DashboardState>(
+                      builder: (context, state) {
+                        int currentCount = 0;
+                        if (state is DashboardLoaded) {
+                          currentCount = state.recentTransactions.length;
+                        }
+        
+                        return _sectionHeader(
+                          "Recent Transactions",
+                          buttonLabel: currentCount > 5 ? "Show Less" : "See All",
+                          onSeeAll: () {
+                            if (currentCount <= 5) {
+                              context.read<DashboardBloc>().add(
+                                FetchDashboardData(limit: 10),
+                              );
+                            } else {
+                              context.read<DashboardBloc>().add(
+                                FetchDashboardData(limit: 5),
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
+        
+                    _buildRecentTransactionsList(),
+                    const SizedBox(height: 24),
+                    _sectionHeader("Savings Goal"),
+                    const SizedBox(height: 12),
+                    _buildSavingsGoalCard(),
+        
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.bug_report),
+                      label: const Text("Test Parser & Bloc"),
+                      onPressed: () {
+                        const testText =
+                            "SBI Bank: Your A/c XXX123 is debited for INR 6776.00 at Meesho";
+                        final amount = AutomationParser.extractAmount(testText);
+                        final title = AutomationParser.extractTitle(testText);
+                        final type = AutomationParser.extractType(testText);
+        
+                        if (amount != null) {
+                          final tx = DetectedTransaction(
+                            amount: amount,
+                            rawBody: testText,
+                            source: "Manual_Test",
+                            title: title,
+                            type: type,
                           );
-                        }).toList(),
-                      );
-                    }
-                    return const SizedBox(
-                      height: 100,
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  },
-                ),
-
-                BlocBuilder<DashboardBloc, DashboardState>(
-                  builder: (context, state) {
-                    int currentCount = 0;
-                    if (state is DashboardLoaded) {
-                      currentCount = state.recentTransactions.length;
-                    }
-
-                    return _sectionHeader(
-                      "Recent Transactions",
-                      buttonLabel: currentCount > 5 ? "Show Less" : "See All",
-                      onSeeAll: () {
-                        if (currentCount <= 5) {
-                          context.read<DashboardBloc>().add(
-                            FetchDashboardData(limit: 10),
+                          context.read<AutomationBloc>().add(
+                            TransactionDetected(tx),
                           );
-                        } else {
-                          context.read<DashboardBloc>().add(
-                            FetchDashboardData(limit: 5),
+                          NotificationManager.showCategorizationAlert(
+                            amount,
+                            title,
+                            type,
                           );
                         }
                       },
-                    );
-                  },
+                    ),
+                  ],
                 ),
-
-                _buildRecentTransactionsList(),
-                const SizedBox(height: 24),
-                _sectionHeader("Savings Goal"),
-                const SizedBox(height: 12),
-                _buildSavingsGoalCard(),
-
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.bug_report),
-                  label: const Text("Test Parser & Bloc"),
-                  onPressed: () {
-                    const testText =
-                        "SBI Bank: Your A/c XXX123 is debited for INR 6776.00 at Meesho";
-                    final amount = AutomationParser.extractAmount(testText);
-                    final title = AutomationParser.extractTitle(testText);
-                    final type = AutomationParser.extractType(testText);
-
-                    if (amount != null) {
-                      final tx = DetectedTransaction(
-                        amount: amount,
-                        rawBody: testText,
-                        source: "Manual_Test",
-                        title: title,
-                        type: type,
-                      );
-                      context.read<AutomationBloc>().add(
-                        TransactionDetected(tx),
-                      );
-                      NotificationManager.showCategorizationAlert(
-                        amount,
-                        title,
-                        type,
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
